@@ -1,11 +1,11 @@
-var NUMBER_OF_GAMES = 3;
+var NUMBER_OF_GAMES = 7;
+var ROLE_COLUMN_NUMBER = 3;
+var NUMBER_OF_DECIMAL_CASES = 2;
+var NUM_INFO_COLUMNS = 3;
 var TRYOUT_SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
 var RESULT_SHEET = TRYOUT_SPREADSHEET.getSheetByName("Results");
 var ALL_SHEETS_NAMES = getAllSheetsNames(); // names as string array
 var PLAYER_HEADER_CELL = "A1";
-var FIRST_GAME_CELL = [8, 2];
-var SECOND_GAME_CELL = [17, 2];
-var THIRD_GAME_CELL = [26, 2];
 var PLAYER_ROLE_CELL = "A2";
 var ROLES_STEMS = ['TOP', 'MID', 'AD', 'JUN', 'SUP'];
 
@@ -87,9 +87,10 @@ function addPlayers() {
           newPlayerRow.setVerticalAlignment("middle");
           var finalPlayerRow = [name, nickName, playerRole].concat(playerNotes);
           finalPlayerRow.push(getAverageNote(playerNotes));
+          Logger.log("Player: %s", finalPlayerRow);
           RESULT_SHEET.appendRow(finalPlayerRow);
           RESULT_SHEET.hideRows(1);
-          RESULT_SHEET.sort(7, false).sort(3);
+          RESULT_SHEET.sort(NUMBER_OF_GAMES + NUM_INFO_COLUMNS + 1, false).sort(ROLE_COLUMN_NUMBER);
           RESULT_SHEET.unhideRow(RESULT_SHEET.getRange('A1'));
         }
         
@@ -111,7 +112,7 @@ function getAverageNote(notes) {
       numNotes++;
     }
   }
-  return (sum / numNotes);
+  return (parseFloat((sum / numNotes).toFixed(NUMBER_OF_DECIMAL_CASES)));
 }
 
 function setAverage() {
@@ -128,8 +129,44 @@ function setAverage() {
 function generateResults() {
   RESULT_SHEET.activate();
   RESULT_SHEET.clearContents();
+  RESULT_SHEET.clearFormats();
   createHeader();
   addPlayers();
+  styleResultSheet();
+}
+
+function styleResultSheet() {
+  RESULT_SHEET.activate();
+  var lastColumnNumber = RESULT_SHEET.getLastColumn();
+  var lastRowNumber = RESULT_SHEET.getLastRow();
+  var colors = {
+    "AD": "#FF2E64",
+    "TOP": "#3AE5FA",
+    "JUNGLE": "#AEF14B",
+    "MID": "#E970FF",
+    "SUP": "#37F8D8",
+  };
+  // header coloring
+  RESULT_SHEET.getRange(1, 1, 1, lastColumnNumber).setBackground("#B0B0B0");
+  
+  // sheet coloring
+  for (var i = 2; i < lastRowNumber + 1; i++) {
+    var role = RESULT_SHEET.getRange(i, ROLE_COLUMN_NUMBER).getValue();
+    var color = null;
+    if (role === "TOP") {
+      color = colors["TOP"];
+    } else if (role === "AD") {
+      color = colors["AD"];
+    } else if (role === "SUP") {
+      color = colors["SUP"];
+    } else if (role === "JUNGLE") {
+      color = colors["JUNGLE"];
+    } else if (role === "MID") {
+      color = colors["MID"];
+    }
+    
+    RESULT_SHEET.getRange(i, 1, 1, lastColumnNumber).setBackground(color);
+  }
 }
 
 function getAllSheetsNames() {
